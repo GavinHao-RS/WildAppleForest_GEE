@@ -1,0 +1,234 @@
+/****
+Example: Wild Apple Forest Classification over Central Asia using Sentinel-2 and Random Forest
+- Years: 2020, 2023, 2025
+- Region: Central Asia (Kazakhstan, Kyrgyzstan, Tajikistan, Uzbekistan, Turkmenistan) clipped by GAUL level 0 admin boundaries
+- Features: spectral, vegetation indices, multi-temporal seasonal composites, terrain, texture
+- Cloud handling: Sentinel-2 Harmonized + Cloud Score Plus (CSP) with quality mosaic (NDVI) to avoid .median()
+- Classes: 1 Wild Apple Forest (user-provided samples), 2 Other Forest, 3 Cropland, 4 Grassland/Shrub, 5 Urban/Bare, 6 Water/Snow/Ice
+- Non–wild-apple samples: automatically derived from ESA WorldCover 10 m 2021 with noise mitigation
+- Outputs: classified maps for each year, accuracy assessment, feature importance, and visual comparison
+
+Replace the wildAppleSamples asset with your own FeatureCollection of points/polygons labelled with class = 1.
+****/
+
+// ----------------------- Region of Interest -----------------------
+var countries = ['Kazakhstan', 'Kyrgyzstan', 'Tajikistan', 'Uzbekistan', 'Turkmenistan'];
+var admin = ee.FeatureCollection('FAO/GAUL/2015/level0')
+  .filter(ee.Filter.inList('ADM0_NAME', countries));
+var roi = admin.geometry();
+
+// ----------------------- Sentinel-2 utilities -----------------------
+// Use Harmonized Sentinel-2 with Cloud Score Plus for cloud handling.
+var s2Sr = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED');
+var csp = ee.ImageCollection('GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED');
+
+function addCloudScorePlus(image) {
+  var score = csp.filter(ee.Filter.eq('system:index', image.get('system:index'))).first();
+  var cs = ee.Image(ee.Algorithms.If(score,
+    ee.Image(score).select('cs'),
+    ee.Image.constant(100) // default to cloudy if missing
+  )).rename('CSP_CS');
+  return image.addBands(cs);
+}
+
+function maskClouds(image) {
+  var cs = image.select('CSP_CS');
+  var mask = cs.lt(50); // keep pixels with cloud score < 50 (0-100, lower is clearer)
+  return image.updateMask(mask)
+    .copyProperties(image, image.propertyNames());
+}
+
+function addIndices(image) {
+  var ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI');
+  var evi = image.expression(
+    '2.5 * ((NIR - RED) / (NIR + 6 * RED - 7.5 * BLUE + 1))', {
+      'NIR': image.select('B8'),
+      'RED': image.select('B4'),
+      'BLUE': image.select('B2')
+    }).rename('EVI');
+  var ndwi = image.normalizedDifference(['B3', 'B8']).rename('NDWI');
+  return image.addBands([ndvi, evi, ndwi]);
+}
+
+function seasonalComposite(year, startMonth, endMonth) {
+  var start = ee.Date.fromYMD(year, startMonth, 1);
+  var end = ee.Date.fromYMD(year, endMonth, 1).advance(1, 'month');
+
+  var s2 = s2Sr.filterDate(start, end)
+    .filterBounds(roi)
+    .map(addCloudScorePlus)
+    .map(maskClouds)
+    .map(function(img) { return img.resample('bilinear'); })
+    .map(addIndices);
+
+  // Use NDVI-based quality mosaic (highest NDVI pixel) to avoid median composite
+  var composite = s2.qualityMosaic('NDVI');
+  return composite;
+}
+
+function addTexture(baseImage) {
+  var gray = baseImage.select('NDVI').multiply(100).toInt();
+  var glcm = gray.glcmTexture({size: 3});
+  return baseImage.addBands(glcm.rename(function(name) { return name.replace('NDVI_', 'NDVI_tex_'); }));
+}
+
+// Terrain features
+var srtm = ee.Image('USGS/SRTMGL1_003');
+var terrain = ee.Algorithms.Terrain(srtm).select(['elevation', 'slope']);
+
+// ----------------------- WorldCover-derived samples -----------------------
+var worldCover = ee.Image('ESA/WorldCover/v200');
+var worldCover2021 = worldCover.select('Map');
+
+// Map WorldCover classes to our scheme (excluding wild apple = 1)
+var wcToClass = worldCover2021.remap(
+  [10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 100, 111, 112, 200], // source
+  [5, 3, 2, 5, 5, 5, 5, 6, 4, 4, 6, 4, 4, 6] // target classes
+).rename('class');
+
+// Noise mitigation: remove small isolated patches (<5 connected pixels) and apply mode filter
+var connected = wcToClass.connectedPixelCount(25);
+var wcDenoised = wcToClass.updateMask(connected.gte(5))
+  .focalMode(1, 'square', 'pixels');
+
+// ----------------------- User-provided wild apple samples -----------------------
+// Replace this asset with your own FeatureCollection with property 'class' = 1
+var wildAppleSamples = ee.FeatureCollection('users/your_username/wild_apple_samples');
+
+function stratifiedWorldCoverSamples(region, scale) {
+  var sampleImg = wcDenoised.clip(region);
+  var stratified = sampleImg.stratifiedSample({
+    numPoints: 2000,
+    classBand: 'class',
+    region: region,
+    scale: scale,
+    geometries: true,
+    classValues: [2,3,4,5,6],
+    classPoints: [400,400,400,400,400]
+  });
+  return stratified;
+}
+
+// ----------------------- Feature stack per year -----------------------
+function buildFeatureStack(year) {
+  var spring = seasonalComposite(year, 3, 5);
+  var summer = seasonalComposite(year, 6, 8);
+  var autumn = seasonalComposite(year, 9, 11);
+
+  var phenology = summer.select('NDVI').rename('NDVI_peak')
+    .addBands(summer.select('EVI').rename('EVI_peak'))
+    .addBands(spring.select('NDVI').rename('NDVI_spring'))
+    .addBands(autumn.select('NDVI').rename('NDVI_autumn'))
+    .addBands(
+      summer.select('NDVI').subtract(autumn.select('NDVI')).rename('NDVI_peak_minus_autumn'))
+    .addBands(
+      summer.select('NDVI').subtract(spring.select('NDVI')).rename('NDVI_peak_minus_spring'));
+
+  var spectral = summer.select(['B2','B3','B4','B8','NDVI','EVI','NDWI'])
+    .rename(['B2_su','B3_su','B4_su','B8_su','NDVI_su','EVI_su','NDWI_su'])
+    .addBands(spring.select(['B2','B3','B4','B8','NDVI','EVI','NDWI'])
+      .rename(['B2_sp','B3_sp','B4_sp','B8_sp','NDVI_sp','EVI_sp','NDWI_sp']))
+    .addBands(autumn.select(['B2','B3','B4','B8','NDVI','EVI','NDWI'])
+      .rename(['B2_au','B3_au','B4_au','B8_au','NDVI_au','EVI_au','NDWI_au']));
+
+  var texture = addTexture(summer.select(['NDVI']));
+
+  var featureStack = spectral
+    .addBands(phenology)
+    .addBands(texture)
+    .addBands(terrain);
+  return featureStack.clip(roi);
+}
+
+// ----------------------- Training data -----------------------
+function prepareTrainingData(year) {
+  var features = buildFeatureStack(year);
+  var scale = 10;
+
+  var wcSamples = stratifiedWorldCoverSamples(roi, scale);
+  var allSamples = wcSamples.merge(wildAppleSamples);
+
+  var sample = features.sampleRegions({
+    collection: allSamples,
+    properties: ['class'],
+    scale: scale,
+    geometries: true
+  });
+
+  // Train/validation split
+  var withRand = sample.randomColumn('rand', 1234);
+  var training = withRand.filter('rand < 0.7');
+  var validation = withRand.filter('rand >= 0.7');
+
+  return {training: training, validation: validation, features: features};
+}
+
+// ----------------------- Classification -----------------------
+function classifyYear(year) {
+  var data = prepareTrainingData(year);
+  var bands = data.features.bandNames();
+
+  var classifier = ee.Classifier.smileRandomForest({
+    numberOfTrees: 150,
+    variablesPerSplit: 6,
+    minLeafPopulation: 2,
+    bagFraction: 0.7,
+    seed: 42
+  }).train({
+    features: data.training,
+    classProperty: 'class',
+    inputProperties: bands
+  });
+
+  var classified = data.features.classify(classifier).rename('classification');
+
+  // Accuracy
+  var validated = data.validation.classify(classifier);
+  var confusion = validated.errorMatrix('class', 'classification');
+  print('Year', year, 'Confusion Matrix', confusion);
+  print('Year', year, 'Overall Accuracy', confusion.accuracy());
+  print('Year', year, 'Kappa', confusion.kappa());
+
+  // Feature importance
+  var importance = ee.Dictionary(classifier.explain().get('importance'));
+  print('Year', year, 'Feature importance', importance);
+
+  return classified;
+}
+
+// ----------------------- Run for each year -----------------------
+var years = [2020, 2023, 2025];
+var results = years.map(function(y) { return classifyYear(y); });
+
+// ----------------------- Visualization -----------------------
+var palette = ['#b30000', '#00a600', '#f2c649', '#7ab07a', '#8c8c8c', '#3366ff'];
+var classNames = ['Wild Apple Forest','Other Forest','Cropland','Grass/Shrub','Urban/Bare','Water/Snow/Ice'];
+
+results.forEach(function(img, idx) {
+  var year = years[idx];
+  Map.addLayer(img.clip(roi), {min:1, max:6, palette: palette}, 'Classification ' + year, false);
+});
+
+Map.addLayer(roi, {color: 'red'}, 'ROI', false);
+Map.centerObject(roi, 5);
+
+// Comparison mosaic
+var compositeComparison = ee.ImageCollection(results)
+  .toBands()
+  .rename(['class_2020','class_2023','class_2025']);
+Map.addLayer(compositeComparison.clip(roi), {min:1, max:6, palette: palette}, 'Comparison (bands per year)', false);
+
+// Export examples
+function exportResult(image, year) {
+  Export.image.toDrive({
+    image: image.toInt(),
+    description: 'WildAppleRF_' + year,
+    folder: 'GEE_exports',
+    fileNamePrefix: 'wildapple_rf_' + year,
+    region: roi,
+    scale: 10,
+    maxPixels: 1e13
+  });
+}
+
+years.forEach(function(y, idx) { exportResult(ee.Image(results[idx]), y); });
