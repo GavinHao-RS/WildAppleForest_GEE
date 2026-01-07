@@ -1,7 +1,7 @@
 /****
-Example: Wild Apple Forest Classification over Central Asia using Sentinel-2 and Random Forest
+Example: Wild Apple Forest Classification over Ili Prefecture (Xinjiang, China) using Sentinel-2 and Random Forest
 - Years: 2020, 2023, 2025
-- Region: Central Asia (Kazakhstan, Kyrgyzstan, Tajikistan, Uzbekistan, Turkmenistan) clipped by GAUL level 0 admin boundaries
+- Region: Ili Kazakh Autonomous Prefecture (Xinjiang, China) clipped by GAUL level 2 admin boundaries
 - Features: spectral, vegetation indices, multi-temporal seasonal composites, terrain, texture
 - Cloud handling: Sentinel-2 Harmonized + Cloud Score Plus (CSP) with quality mosaic (NDVI) to avoid .median()
 - Classes: 1 Wild Apple Forest (user-provided samples), 2 Other Forest, 3 Cropland, 4 Grassland/Shrub, 5 Urban/Bare, 6 Water/Snow/Ice
@@ -12,9 +12,10 @@ Replace the wildAppleSamples asset with your own FeatureCollection of points/pol
 ****/
 
 // ----------------------- Region of Interest -----------------------
-var countries = ['Kazakhstan', 'Kyrgyzstan', 'Tajikistan', 'Uzbekistan', 'Turkmenistan'];
-var admin = ee.FeatureCollection('FAO/GAUL/2015/level0')
-  .filter(ee.Filter.inList('ADM0_NAME', countries));
+var admin = ee.FeatureCollection('FAO/GAUL/2015/level2')
+  .filter(ee.Filter.eq('ADM0_NAME', 'China'))
+  .filter(ee.Filter.eq('ADM1_NAME', 'Xinjiang Uygur'))
+  .filter(ee.Filter.eq('ADM2_NAME', 'Ili Kazakh Autonomous Prefecture'));
 var roi = admin.geometry();
 
 var trueColorVis = {bands: ['B4', 'B3', 'B2'], min: 0, max: 3000};
