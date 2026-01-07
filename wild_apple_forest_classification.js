@@ -76,7 +76,11 @@ function seasonalComposite(year, startMonth, endMonth) {
 function addTexture(baseImage) {
   var gray = baseImage.select('NDVI').multiply(100).toInt();
   var glcm = gray.glcmTexture({size: 3});
-  return baseImage.addBands(glcm.rename(function(name) { return name.replace('NDVI_', 'NDVI_tex_'); }));
+  var names = glcm.bandNames();
+  var newNames = names.map(function(name) {
+    return ee.String(name).replace('NDVI_', 'NDVI_tex_');
+  });
+  return baseImage.addBands(glcm.rename(newNames));
 }
 
 // Terrain features
