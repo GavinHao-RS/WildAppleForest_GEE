@@ -87,8 +87,8 @@ var srtm = ee.Image('USGS/SRTMGL1_003');
 var terrain = ee.Algorithms.Terrain(srtm).select(['elevation', 'slope']);
 
 // ----------------------- WorldCover-derived samples -----------------------
-var worldCover = ee.Image('ESA/WorldCover/v200');
-var worldCover2021 = worldCover.select('Map');
+var worldCover = ee.ImageCollection('ESA/WorldCover/v200');
+var worldCover2021 = worldCover.filter(ee.Filter.eq('YEAR', 2021)).first().select('Map');
 
 // Map WorldCover classes to our scheme (excluding wild apple = 1)
 var wcToClass = worldCover2021.remap(
