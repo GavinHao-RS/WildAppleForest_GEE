@@ -88,7 +88,15 @@ var terrain = ee.Algorithms.Terrain(srtm).select(['elevation', 'slope']);
 
 // ----------------------- WorldCover-derived samples -----------------------
 var worldCover = ee.ImageCollection('ESA/WorldCover/v200');
-var worldCover2021 = worldCover.filter(ee.Filter.eq('YEAR', 2021)).first().select('Map');
+var worldCover2021 = ee.Image(ee.Algorithms.If(
+  worldCover.filter(ee.Filter.eq('YEAR', 2021)).size().gt(0),
+  worldCover.filter(ee.Filter.eq('YEAR', 2021)).first(),
+  ee.Algorithms.If(
+    worldCover.filter(ee.Filter.eq('year', 2021)).size().gt(0),
+    worldCover.filter(ee.Filter.eq('year', 2021)).first(),
+    worldCover.first()
+  )
+)).select('Map');
 
 // Map WorldCover classes to our scheme (excluding wild apple = 1)
 var wcToClass = worldCover2021.remap(
