@@ -116,13 +116,14 @@ var wildAppleSamples = ee.FeatureCollection('users/your_username/wild_apple_samp
 function stratifiedWorldCoverSamples(region, scale) {
   var sampleImg = wcDenoised.clip(region);
   var stratified = sampleImg.stratifiedSample({
-    numPoints: 2000,
+    numPoints: 1000,
     classBand: 'class',
     region: region,
     scale: scale,
-    geometries: true,
+    tileScale: 4,
+    geometries: false,
     classValues: [2, 3, 4, 5, 6],
-    classPoints: [400, 400, 400, 400, 400]
+    classPoints: [200, 200, 200, 200, 200]
   });
   return stratified;
 }
@@ -164,7 +165,7 @@ var years = [2020, 2023, 2025];
 // ----------------------- Training data -----------------------
 function prepareTrainingData(year) {
   var features = buildFeatureStack(year);
-  var scale = 10;
+  var scale = 20;
 
   var wcSamples = stratifiedWorldCoverSamples(roi, scale);
   var allSamples = wcSamples.merge(wildAppleSamples);
@@ -173,7 +174,8 @@ function prepareTrainingData(year) {
     collection: allSamples,
     properties: ['class'],
     scale: scale,
-    geometries: true
+    tileScale: 4,
+    geometries: false
   });
 
   // Train/validation split
