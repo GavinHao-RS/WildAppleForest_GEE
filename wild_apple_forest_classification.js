@@ -113,6 +113,38 @@ var wcDenoised = wcToClass.updateMask(connected.gte(5))
 // Replace this asset with your own FeatureCollection with property 'class' = 1
 var wildAppleSamples = ee.FeatureCollection('users/your_username/wild_apple_samples');
 
+// Example: build wild apple samples from a table plus a small polygon region
+// Ensure `table` is an imported FeatureCollection with Longitude/Latitude fields.
+var pts = table.map(function(f) {
+  var lon = ee.Number(f.get('Longitude'));
+  var lat = ee.Number(f.get('Latitude'));
+  return ee.Feature(
+    ee.Geometry.Point([lon, lat]),
+    f.toDictionary()
+  ).set('class', 1);
+});
+
+var corners = [
+  [82.77484146, 43.20874077],
+  [82.77116641, 43.2112944],
+  [82.77223955, 43.21193612],
+  [82.7756369, 43.20940169]
+];
+var rect = ee.Geometry.Polygon([corners], null, false);
+var rectPts = ee.Image.pixelLonLat()
+  .sample({
+    region: rect,
+    scale: 10,
+    geometries: false,
+    tileScale: 4
+  })
+  .map(function(f) {
+    return f.set('class', 1);
+  });
+
+var pts_yili = pts.filterBounds(roi).merge(rectPts.filterBounds(roi));
+wildAppleSamples = pts_yili;
+
 function stratifiedWorldCoverSamples(region, scale) {
   var sampleImg = wcDenoised.clip(region);
   var stratified = sampleImg.stratifiedSample({
