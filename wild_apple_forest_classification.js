@@ -265,6 +265,37 @@ var previewSummer = seasonalComposite(previewYear, 6, 8);
 var previewAutumn = seasonalComposite(previewYear, 9, 11);
 var previewStack = buildFeatureStack(previewYear);
 
+function invalidPixelPercent(image, region, scale) {
+  var totalCount = ee.Image.constant(1).rename('total').reduceRegion({
+    reducer: ee.Reducer.sum(),
+    geometry: region,
+    scale: scale,
+    maxPixels: 1e13,
+    tileScale: 4
+  }).get('total');
+
+  var stats = image.bandNames().map(function(bandName) {
+    var band = ee.String(bandName);
+    var validCount = image.select(band).mask().reduceRegion({
+      reducer: ee.Reducer.sum(),
+      geometry: region,
+      scale: scale,
+      maxPixels: 1e13,
+      tileScale: 4
+    }).get(band);
+    var invalidPercent = ee.Number(1).subtract(ee.Number(validCount).divide(totalCount)).multiply(100);
+    return ee.Feature(null, {
+      band: band,
+      invalid_percent: invalidPercent
+    });
+  });
+
+  return ee.FeatureCollection(stats);
+}
+
+print('Invalid pixel percent (preview summer)', invalidPixelPercent(previewSummer, roi, 10));
+print('Invalid pixel percent (preview stack)', invalidPixelPercent(previewStack, roi, 10));
+
 Map.addLayer(previewSpring.select('CSP_CS').clip(roi), cspVis, 'CSP score spring ' + previewYear, false);
 Map.addLayer(previewSpring.select(trueColorVis.bands).clip(roi), trueColorVis, 'Spring true color ' + previewYear, false);
 Map.addLayer(previewSpring.select('NDVI').clip(roi), ndviVis, 'Spring NDVI ' + previewYear, false);
