@@ -79,7 +79,15 @@ function addTexture(baseImage) {
   var newNames = names.map(function(name) {
     return ee.String(name).replace('NDVI_', 'NDVI_tex_');
   });
-  return baseImage.addBands(glcm.rename(newNames));
+  var texture = glcm.rename(newNames).select([
+    'NDVI_tex_contrast',
+    'NDVI_tex_entropy',
+    'NDVI_tex_homogeneity',
+    'NDVI_tex_dissimilarity',
+    'NDVI_tex_asm',
+    'NDVI_tex_variance'
+  ]);
+  return baseImage.addBands(texture);
 }
 
 // Terrain features
