@@ -161,7 +161,8 @@ function stratifiedWorldCoverSamples(region, scale) {
     region: region,
     scale: scale,
     tileScale: 4,
-    geometries: false,
+    // 当该属性为false时，采样取点无地理坐标，无法在影像上采样，并非过度mask的问题
+    geometries: true,
     classValues: [2, 3, 4, 5, 6],
     classPoints: [200, 200, 200, 200, 200]
   });
