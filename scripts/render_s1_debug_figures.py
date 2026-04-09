@@ -7,7 +7,7 @@ import pandas as pd
 matplotlib.use("Agg")
 
 
-def build_dataframe():
+def build_problem_dataframe():
     months = ["M03", "M04", "M05", "M06", "M07", "M08", "M09", "M10"]
     return pd.DataFrame(
         {
@@ -25,7 +25,25 @@ def build_dataframe():
     )
 
 
-def render_table_png(df: pd.DataFrame, output_path: Path):
+def build_validation_dataframe():
+    months = ["M03", "M04", "M05", "M06", "M07", "M08", "M09", "M10"]
+    return pd.DataFrame(
+        {
+            "Month": months,
+            "S1 image count": [36, 37, 38, 32, 36, 35, 36, 34],
+            "Ascending": [23, 25, 23, 22, 23, 24, 22, 23],
+            "Descending": [13, 12, 15, 10, 13, 11, 14, 11],
+            "S1 total sample": [2030] * 8,
+            "VV": [2030] * 8,
+            "VH": [2030] * 8,
+            "VV_db": [2030] * 8,
+            "VH_db": [2030] * 8,
+            "VV_VH_ratio": [2030] * 8,
+        }
+    )
+
+
+def render_table_png(df: pd.DataFrame, output_path: Path, title: str):
     fig, ax = plt.subplots(figsize=(16, 4.8), dpi=200)
     ax.axis("off")
     table = ax.table(
@@ -49,13 +67,13 @@ def render_table_png(df: pd.DataFrame, output_path: Path):
         elif col == 4:
             cell.set_facecolor("#fce4d6")
 
-    fig.suptitle("Wild Apple S1 Monthly Sampling Diagnostics Table", fontsize=14, fontweight="bold", y=0.75)
+    fig.suptitle(title, fontsize=14, fontweight="bold", y=0.75)
     fig.tight_layout(rect=[0, 0, 1, 0.92])
     fig.savefig(output_path, bbox_inches="tight")
     plt.close(fig)
 
 
-def render_bar_chart_png(df: pd.DataFrame, output_path: Path):
+def render_bar_chart_png(df: pd.DataFrame, output_path: Path, title: str):
     plot_df = df[["Month", "VV", "VH", "VV_db", "VH_db", "VV_VH_ratio"]].set_index("Month")
     colors = {
         "VV": "#4C78A8",
@@ -67,7 +85,7 @@ def render_bar_chart_png(df: pd.DataFrame, output_path: Path):
 
     fig, ax = plt.subplots(figsize=(14, 7), dpi=200)
     plot_df.plot(kind="bar", ax=ax, color=[colors[c] for c in plot_df.columns], width=0.82)
-    ax.set_title("Wild Apple S1 Monthly Sample Counts by Band", fontsize=15, fontweight="bold", pad=28)
+    ax.set_title(title, fontsize=15, fontweight="bold", pad=28)
     ax.set_xlabel("Month")
     ax.set_ylabel("Sample count")
     ax.grid(axis="y", linestyle="--", alpha=0.35)
@@ -97,12 +115,34 @@ def main():
     out_dir = repo_root / "outputs" / "debug_figures"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    df = build_dataframe()
-    render_table_png(df, out_dir / "wildapple_s1_sampling_diagnostics_table.png")
-    render_bar_chart_png(df, out_dir / "wildapple_s1_sampling_diagnostics_barchart.png")
+    problem_df = build_problem_dataframe()
+    render_table_png(
+        problem_df,
+        out_dir / "wildapple_s1_sampling_diagnostics_table.png",
+        "Wild Apple S1 Monthly Sampling Diagnostics Table",
+    )
+    render_bar_chart_png(
+        problem_df,
+        out_dir / "wildapple_s1_sampling_diagnostics_barchart.png",
+        "Wild Apple S1 Monthly Sample Counts by Band",
+    )
+
+    validation_df = build_validation_dataframe()
+    render_table_png(
+        validation_df,
+        out_dir / "wildapple_s1_sampling_validation_table.png",
+        "Wild Apple S1 Minimal-Fix Validation Table",
+    )
+    render_bar_chart_png(
+        validation_df,
+        out_dir / "wildapple_s1_sampling_validation_barchart.png",
+        "Wild Apple S1 Minimal-Fix Validation Counts by Band",
+    )
 
     print(out_dir / "wildapple_s1_sampling_diagnostics_table.png")
     print(out_dir / "wildapple_s1_sampling_diagnostics_barchart.png")
+    print(out_dir / "wildapple_s1_sampling_validation_table.png")
+    print(out_dir / "wildapple_s1_sampling_validation_barchart.png")
 
 
 if __name__ == "__main__":
