@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-04-18T18:18:03.765426+08:00",
+  "label": "trial1_output",
+  "repo_root": "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE",
+  "archive_dir": "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803",
+  "outputs_dir": "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\outputs\\wildapple_localrun_2021",
+  "notebook": "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\wildapple_localrun_python.ipynb",
+  "notebook_copy": "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\wildapple_localrun_python_20260418_181803.ipynb",
+  "copied_output_items": [
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\baseline_samples_raw.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\candidate_feature_table.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\clean_samples.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cleaned_baseline_classification_report.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cleaned_baseline_confusion_matrix.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cleaned_baseline_confusion_matrix.png",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cleaned_baseline_feature_importance.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cleaned_baseline_feature_importance.png",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cleaning_summary.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\correlation_pruned_features.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cubic_feature_wide.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\cubic_fit_table.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\final_screened_features.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\jm_feature_scores.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\jm_screened_classification_report.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\jm_screened_confusion_matrix.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\jm_screened_feature_importance.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\jm_selected_features.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\monthly_long_table.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\rf_selected_features.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\rule_screen_feature_summary.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\screened_model_classification_report.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\screened_model_confusion_matrix.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\screened_model_confusion_matrix.png",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\screened_model_feature_importance.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\screened_model_feature_importance.png",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\screening_summary.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\trial_area_by_class_raw.csv",
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\trial_area_by_class_smoothed.csv"
+  ],
+  "copied_extra_items": [
+    "D:\\CODE\\VS__Project\\GEE\\WildAppleForest_GEE\\archive\\trial1_output_20260418_181803\\trial1_试分类面积问题分析_20260418_181714.md"
+  ]
+}
