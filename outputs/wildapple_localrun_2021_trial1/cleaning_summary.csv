@@ -1,0 +1,6 @@
+step,value
+raw_rows,2022
+rows_with_valid_ids,2022
+features_after_missingness_filter,210
+rows_after_missingness_filter,2022
+rows_after_dedup_and_group_cap,1646
